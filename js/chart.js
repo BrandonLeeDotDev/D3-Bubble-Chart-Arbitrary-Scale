@@ -1,7 +1,6 @@
 const nodes_to_create = 65;
 const maxX = Math.floor(Math.random() * (Math.floor(10000) - Math.ceil(1000)) + Math.ceil(1000));
 const maxY = Math.floor(Math.random() * (Math.floor(1000) - Math.ceil(90)) + Math.ceil(90));
-const maxRadius = 100;
 
 var axisXmaxDomain = 0;
 
@@ -10,8 +9,6 @@ var axisYminDomain = maxY / 2 * 0.85;
 
 var radiusMaxDomain = 0;
 var radiusMinDomain = 3;
-
-const radiusMaxRange = 36;
 
 const margin = {
     top: 20,
@@ -85,7 +82,7 @@ function generate_svg_base(){
 
   z = d3.scaleLinear()
     .domain([0, radiusMaxDomain]) // shold be set by max value in data
-    .range([4, radiusMaxRange]);
+    .range([4, 36]);
 
     const color_scale = (axisXmaxDomain / axisYmaxDomain) / 10;
 
@@ -225,7 +222,7 @@ const xBuffer =  maxX / 10;
 const yBuffer = maxY / 2;
 
 function randSize() {
-  return Math.floor(Math.random() * (Math.floor(maxRadius) - Math.ceil(0)) + Math.ceil(0));
+  return Math.floor(Math.random() * (Math.floor(100) - Math.ceil(0)) + Math.ceil(0));
 }
 
 function randX() {
