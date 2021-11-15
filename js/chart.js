@@ -44,7 +44,7 @@ function generate_svg_base(){
   }
 
   if (Math.ceil(axisXmaxDomain / x_divisor) * x_divisor >= x_incriments[1]) {
-      x_round += d3.tickStep(0, axisXmaxDomain, 10)
+      x_round += d3.tickStep(0, axisXmaxDomain, 6)
   }
 
   let x_final =  d3.nice(0, x_round, 6);
