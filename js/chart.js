@@ -19,13 +19,14 @@ const margin = {
   width = 550 - margin.left - margin.right,
   height = 460 - margin.top - margin.bottom;
 
-var nodes = [], links = [];
+var nodes = [],
+  links = [];
 
 let first_iteration_complete = false;
 
 var svg, x, y, z, color, tooltip, moveTooltip, hideTooltip;
 
-function generate_svg_base(){
+function generate_svg_base() {
   svg = d3.select("#chart")
     .append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -33,48 +34,34 @@ function generate_svg_base(){
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  let x_incriments = d3.nice(0, axisXmaxDomain, 6);
+  function return_scale(axisMin, axisMax, tickCount) {
+    let initial_incriments = d3.nice(axisMin, axisMax, tickCount);
 
-  let x_round = x_incriments[1];
+    let initial_max = initial_incriments[1];
 
-  let x_divisor = 1;
+    let divisor = 1;
 
-  while (Math.ceil(Math.log10(Math.floor(axisXmaxDomain) + 1)) - 1 != Math.ceil(Math.log10(x_divisor + 1))) {
-    x_divisor *= 10
+    while (Math.ceil(Math.log10(Math.floor(axisMax) + 1)) - 1 != Math.ceil(Math.log10(divisor + 1))) {
+      divisor *= 10
+    }
+
+    if (Math.ceil(axisMax / divisor) * divisor >= initial_max) {
+      initial_max += d3.tickStep(0, axisMax, tickCount)
+    }
+
+    return d3.nice(axisMin, initial_max, tickCount)[1]
   }
-
-  if (Math.ceil(axisXmaxDomain / x_divisor) * x_divisor >= x_incriments[1]) {
-      x_round += d3.tickStep(0, axisXmaxDomain, 6)
-  }
-
-  let x_final =  d3.nice(0, x_round, 6);
 
   x = d3.scaleLinear()
-    .domain([0, x_final[1]])
+    .domain([0, return_scale(0, axisXmaxDomain, 6)])
     .range([0, width - 10]);
 
   svg.append("g")
     .attr("transform", `translate(0, ${height})`)
     .call(d3.axisBottom(x));
 
-  let y_incriments = d3.nice(axisYminDomain, axisYmaxDomain, 10);
-
-  let y_round = y_incriments[1];
-
-  let y_divisor = 1;
-
-  while (Math.ceil(Math.log10(Math.floor(axisYmaxDomain) + 1)) - 1 != Math.ceil(Math.log10(y_divisor + 1))) {
-    y_divisor *= 10
-  }
-
-  if (Math.ceil(axisYmaxDomain / y_divisor) * y_divisor >= y_incriments[1]) {
-      y_round += d3.tickStep(axisYminDomain, axisYmaxDomain, 10)
-  }
-
-  let y_final = d3.nice(axisYminDomain, y_round, 10)
-
   y = d3.scaleLinear()
-    .domain([axisYminDomain, y_final[1]])
+    .domain([axisYminDomain, return_scale(axisYminDomain, axisYmaxDomain, 10)])
     .range([height, 10])
 
   svg.append("g")
@@ -84,47 +71,47 @@ function generate_svg_base(){
     .domain([0, radiusMaxDomain]) // shold be set by max value in data
     .range([4, 36]);
 
-    const color_scale = (axisXmaxDomain / axisYmaxDomain) / 10;
+  const color_scale = (axisXmaxDomain / axisYmaxDomain) / 10;
 
-    color = d3.scaleLinear()
-      .domain([0, color_scale, color_scale * 2])
-      .range(["green", "orange", "red"]);
+  color = d3.scaleLinear()
+    .domain([0, color_scale, color_scale * 2])
+    .range(["green", "orange", "red"]);
 
-    tooltip = d3.select("#tooltip")
-      .append("div")
-      .style("opacity", 0)
-      .attr("class", "tooltip")
-      .style("background-color", "black")
-      .style("border-radius", "5px")
-      .style("padding", "10px")
-      .style("color", "white")
-      .style("width", "max-content")
-      .style("position", "relative");
+  tooltip = d3.select("#tooltip")
+    .append("div")
+    .style("opacity", 0)
+    .attr("class", "tooltip")
+    .style("background-color", "black")
+    .style("border-radius", "5px")
+    .style("padding", "10px")
+    .style("color", "white")
+    .style("width", "max-content")
+    .style("position", "relative");
 
-    moveTooltip = (event) => {
-      tooltip
-        .style("left", (event.pageX) + 25 + "px")
-        .style("top", (event.pageY - height - 75) + "px");
-    }
+  moveTooltip = (event) => {
+    tooltip
+      .style("left", (event.pageX) + 25 + "px")
+      .style("top", (event.pageY - height - 75) + "px");
+  }
 
-    hideTooltip = (event) => {
-      tooltip
-        .transition()
-        .duration(200)
-        .style("opacity", 0);
-    }
+  hideTooltip = (event) => {
+    tooltip
+      .transition()
+      .duration(200)
+      .style("opacity", 0);
+  }
 
-    showTooltip = (event, node) => {
-      tooltip
-        .transition()
-        .duration(200);
+  showTooltip = (event, node) => {
+    tooltip
+      .transition()
+      .duration(200);
 
-      tooltip
-        .style("opacity", 1)
-        .html("Info: " + node.name)
-        .style("left", (event.pageX) + 25 + "px")
-        .style("top", (event.pageY - height - 75) + "px");
-    }
+    tooltip
+      .style("opacity", 1)
+      .html("Info: " + node.name)
+      .style("left", (event.pageX) + 25 + "px")
+      .style("top", (event.pageY - height - 75) + "px");
+  }
 }
 
 function render_nodes_and_links() {
@@ -173,9 +160,9 @@ function render_nodes_and_links() {
 
     function dragged(event, node) {
       simulation.force(
-          'link',
-          d3.forceLink(links).strength(1).distance(100)
-        ).alpha(.4);
+        'link',
+        d3.forceLink(links).strength(1).distance(100)
+      ).alpha(.4);
 
       circle.raise().attr("cx", node.x = event.x).attr("cy", node.y = event.y);
     }
@@ -203,7 +190,7 @@ function render_nodes_and_links() {
     .attr("class", "y_label")
     .attr("text-anchor", "end")
     .attr("y", 6)
-    .attr("x", - 10)
+    .attr("x", -10)
     .attr("dy", ".75em")
     .attr("transform", "rotate(-90)")
     .text("axisY Label (numbers)")
@@ -215,9 +202,10 @@ function render_nodes_and_links() {
     .attr("x", width - 10)
     .attr("y", height - 6)
     .text("axisX Label (larger numebrs)")
-    .attr("font-size", 13);}
+    .attr("font-size", 13);
+}
 
-const xBuffer =  maxX / 10;
+const xBuffer = maxX / 10;
 
 const yBuffer = maxY / 2;
 
@@ -240,7 +228,9 @@ function build_modify_JSON() {
 
       const thing = things[Math.floor(Math.random() * things.length)];
 
-      let randx = randX(), randy = randY(), randsize = randSize();
+      let randx = randX(),
+        randy = randY(),
+        randsize = randSize();
 
       if (i <= (nodes_to_create / 4) || i >= (nodes_to_create / 4) * 3) {
 
