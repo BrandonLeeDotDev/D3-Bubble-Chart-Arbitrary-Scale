@@ -266,8 +266,8 @@ function build_modify_JSON() {
 
     for (let i = 0; i < nodes_to_create - 1; i++) {
       links.push({
-        source: nodes[i],
-        target: nodes[i + 1]
+        source: i,
+        target: i + 1
       })
     }
   } else {
