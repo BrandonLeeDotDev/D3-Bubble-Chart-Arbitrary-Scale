@@ -71,7 +71,7 @@ function generate_svg_base() {
     .domain([0, radiusMaxDomain])
     .range([4, 36]);
 
-  const color_scale = (axisXmaxDomain / axisYmaxDomain) / 10;
+    const color_scale = Math.log10(axisXmaxDomain / axisYmaxDomain);
 
   color = d3.scaleLinear()
     .domain([0, color_scale, color_scale * 2])
