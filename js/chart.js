@@ -68,7 +68,7 @@ function generate_svg_base() {
     .call(d3.axisLeft(y));
 
   z = d3.scaleLinear()
-    .domain([0, radiusMaxDomain]) // shold be set by max value in data
+    .domain([0, radiusMaxDomain])
     .range([4, 36]);
 
   const color_scale = (axisXmaxDomain / axisYmaxDomain) / 10;
