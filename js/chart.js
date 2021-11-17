@@ -1,4 +1,4 @@
-const nodes_to_create = 65;
+const nodes_to_create = 60;
 const maxX = Math.floor(Math.random() * (Math.floor(10000) - Math.ceil(1000)) + Math.ceil(1000));
 const maxY = Math.floor(Math.random() * (Math.floor(1000) - Math.ceil(90)) + Math.ceil(90));
 
@@ -71,7 +71,7 @@ function generate_svg_base() {
     .domain([0, radiusMaxDomain])
     .range([4, 36]);
 
-    const color_scale = Math.log10(axisXmaxDomain / axisYmaxDomain);
+  const color_scale = Math.log10(axisXmaxDomain / axisYmaxDomain) // 10;
 
   color = d3.scaleLinear()
     .domain([0, color_scale, color_scale * 2])
@@ -115,6 +115,7 @@ function generate_svg_base() {
 }
 
 function render_nodes_and_links() {
+
   d3.selectAll('.nodes').remove();
   d3.selectAll('.lines').remove();
   d3.selectAll('.y_label').remove();
@@ -133,58 +134,60 @@ function render_nodes_and_links() {
     .append('line')
     .attr("class", "lines");
 
-  const circles = svg
-    .selectAll('circle')
-    .data(nodes)
-    .enter()
-    .append('circle')
-    .attr("class", "nodes")
-    .attr("id", node => (node.id))
-    .style("fill", node => color(x(node.x_axis) / y(node.y_axis)))
-    .attr('r', node => z(node.radius))
-    .attr("cx", node => x(node.x_axis))
-    .attr("cy", node => y(node.y_axis))
-    .on("mouseover", showTooltip)
-    .on("mousemove", moveTooltip)
-    .on("mouseleave", hideTooltip)
-    .call(d3.drag().on("start", started));
+    const circles = svg
+      .selectAll('circle')
+      .data(nodes)
+      .enter()
+      .append('circle')
+      .attr("class", "nodes")
+      .style("fill", node => color(x(node.x_axis) / y(node.y_axis)))
+      .attr('r', node => z(node.radius))
+      .attr("cx", node => x(node.x_axis))
+      .attr("cy", node => y(node.y_axis))
+      .on("mouseover", showTooltip)
+      .on("mousemove", moveTooltip)
+      .on("mouseleave", hideTooltip)
+      .call(d3.drag().on("start", started));
 
-  const simulation = d3.forceSimulation(nodes)
-    .force('x', d3.forceX(node => x(node.x_axis)).strength(0.2))
-    .force('y', d3.forceY(node => y(node.y_axis)).strength(0.2));
+    const simulation = d3.forceSimulation(nodes)
+      .force('x', d3.forceX(node => x(node.x_axis)).strength(0.2))
+      .force('y', d3.forceY(node => y(node.y_axis)).strength(0.2));
 
-  function started(event) {
-    const circle = d3.select(this).classed("dragging", true);
+    function started(event) {
+      const circle = d3.select(this).classed("dragging", true);
 
-    event.on("drag", dragged).on("end", ended);
+      event.on("drag", dragged).on("end", ended);
 
-    function dragged(event, node) {
-      simulation.force(
-        'link',
-        d3.forceLink(links).strength(1).distance(100)
-      ).alpha(.4);
+      function dragged(event, node) {
+        simulation.restart()
+        simulation.alpha(.07).force(
+            'link',
+            d3.forceLink(links).strength(1).distance(5)
+          )
+          .force('x', d3.forceX(x(node.x_axis)).strength(0))
+          .force('y', d3.forceY(y(node.y_axis)).strength(0));
 
-      circle.raise().attr("cx", node.x = event.x).attr("cy", node.y = event.y);
+        circle.raise().attr("cx", node.x = event.x).attr("cy", node.y = event.y);
+      }
+
+      function ended() {
+        simulation.alpha(.3)
+          .force('x', d3.forceX(node => x(node.x_axis)).strength(1))
+          .force('y', d3.forceY(node => y(node.y_axis)).strength(1));
+
+        circle.classed("dragging", false);
+      }
     }
 
-    function ended() {
-      simulation
-        .force('x', d3.forceX(node => x(node.x_axis)).strength(1))
-        .force('y', d3.forceY(node => y(node.y_axis)).strength(1));
+    simulation.on('tick', () => {
+      circles.attr('cx', node => node.x).attr('cy', node => node.y);
 
-      circle.classed("dragging", false);
-    }
-  }
-
-  simulation.on('tick', () => {
-    circles.attr('cx', node => node.x).attr('cy', node => node.y);
-
-    lines
-      .attr('x1', link => link.source.x)
-      .attr('y1', link => link.source.y)
-      .attr('x2', link => link.target.x)
-      .attr('y2', link => link.target.y);
-  });
+      lines
+        .attr('x1', link => link.source.x)
+        .attr('y1', link => link.source.y)
+        .attr('x2', link => link.target.x)
+        .attr('y2', link => link.target.y);
+    });
 
   svg.append("text")
     .attr("class", "y_label")
@@ -257,8 +260,8 @@ function build_modify_JSON() {
         nodes.push({
           id: "node" + i,
           name: thing,
-          x_axis: (i - nodes_to_create / 4) * ((axisXmaxDomain - (xBuffer + (radiusMaxDomain - radiusMinDomain) / 2)) / (nodes_to_create / 2)) + xBuffer + (randSize() / 5),
-          y_axis: (i - nodes_to_create / 4) * ((axisYmaxDomain - ((radiusMaxDomain - radiusMinDomain) / 2)) / (nodes_to_create)) + yBuffer + (randSize() / 5),
+          x_axis: (i - nodes_to_create / 4) * ((axisXmaxDomain - (xBuffer + (radiusMaxDomain - radiusMinDomain) / 2)) / (nodes_to_create / 2)) + xBuffer + (randSize() / 4),
+          y_axis: (i - nodes_to_create / 4) * ((axisYmaxDomain - ((radiusMaxDomain - radiusMinDomain) / 2)) / (nodes_to_create)) + yBuffer + (randSize() / 4),
           radius: randsize
         });
       }
@@ -266,8 +269,8 @@ function build_modify_JSON() {
 
     for (let i = 0; i < nodes_to_create - 1; i++) {
       links.push({
-        source: i,
-        target: i + 1
+        source: nodes[i],
+        target: nodes[i + 1]
       })
     }
   } else {
